@@ -1,5 +1,7 @@
 import bcrypt from 'bcryptjs'
-import { setLoginSession } from '../../lib/auth'
+import { getIronSession } from 'iron-session'
+import { sessionOptions } from '../../lib/auth'
+import { prisma } from '../../lib/db'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -8,19 +10,26 @@ export default async function handler(req, res) {
 
   const { email, password } = req.body
 
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL
-  const ADMIN_HASH = process.env.ADMIN_PASSWORD_HASH
+  try {
+    const admin = await prisma.admin.findUnique({ where: { email } })
 
-  if (!ADMIN_EMAIL || !ADMIN_HASH) {
-    return res.status(500).json({ error: 'Server configuration error' })
-  }
+    if (!admin) {
+      return res.status(401).json({ error: 'Invalid credentials' })
+    }
 
-  const valid = await bcrypt.compare(password, ADMIN_HASH)
+    const valid = await bcrypt.compare(password, admin.passwordHash)
 
-  if (email === ADMIN_EMAIL && valid) {
-    await setLoginSession(req, res, { id: null, email, loggedIn: true })
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid credentials' })
+    }
+
+    const session = await getIronSession(req, res, sessionOptions)
+    session.admin = { id: admin.id, email: admin.email, loggedIn: true }
+    await session.save()
+
     return res.status(200).json({ success: true })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ error: 'Server error' })
   }
-
-  return res.status(401).json({ error: 'Invalid email or password' })
 }
