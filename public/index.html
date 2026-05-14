@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MailBlast — Bulk Personalised Mailer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #185FA5;
+      --blue-light: #E6F1FB;
+      --blue-mid: #378ADD;
+      --green: #3B6D11;
+      --green-light: #EAF3DE;
+      --red: #A32D2D;
+      --red-light: #FCEBEB;
+      --amber: #854F0B;
+      --amber-light: #FAEEDA;
+      --gray-50: #F8F8F6;
+      --gray-100: #EFEFEB;
+      --gray-200: #D3D1C7;
+      --gray-400: #888780;
+      --gray-600: #5F5E5A;
+      --gray-800: #2C2C2A;
+      --text: #1a1a18;
+      --text-muted: #5F5E5A;
+      --text-hint: #888780;
+      --border: rgba(0,0,0,0.09);
+      --border-strong: rgba(0,0,0,0.16);
+      --surface: #FFFFFF;
+      --bg: #F2F1EE;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Layout ── */
+    .layout { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      background: var(--gray-800);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      padding: 0;
+    }
+
+    .sidebar-brand {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .sidebar-brand h1 {
+      font-family: 'Sora', sans-serif;
+      font-size: 18px;
+      color: white;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .sidebar-brand p {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 2px;
+    }
+
+    .nav { flex: 1; padding: 12px 8px; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 2px;
+      font-weight: 400;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+    .nav-item.active { background: rgba(255,255,255,0.13); color: white; font-weight: 500; }
+    .nav-item svg { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+    .nav-item.active svg { opacity: 1; }
+
+    .sidebar-footer {
+      padding: 14px 20px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* ── Main area ── */
+    .main { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+    .page { display: none; max-width: 780px; }
+    .page.active { display: block; }
+
+    .page-header { margin-bottom: 24px; }
+    .page-header h2 { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 600; color: var(--text); }
+    .page-header p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .card-header svg { width: 16px; height: 16px; color: var(--blue); }
+
+    .step-badge {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Form elements ── */
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      margin-top: 14px;
+    }
+    label:first-child { margin-top: 0; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: white;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--blue-mid);
+      box-shadow: 0 0 0 3px rgba(55,138,221,0.12);
+    }
+
+    .hint { font-size: 11.5px; color: var(--text-hint); margin-top: 5px; }
+
+    .row { display: flex; gap: 12px; }
+    .row > * { flex: 1; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border-strong);
+      background: white;
+      color: var(--text);
+      transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn:hover { background: var(--gray-50); border-color: var(--gray-200); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .btn svg { width: 14px; height: 14px; }
+
+    .btn.primary { background: var(--blue); color: white; border-color: var(--blue); }
+    .btn.primary:hover { background: #0C447C; border-color: #0C447C; }
+
+    .btn.success { background: var(--green); color: white; border-color: var(--green); }
+    .btn.danger { background: var(--red); color: white; border-color: var(--red); }
+    .btn.sm { padding: 5px 10px; font-size: 12px; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .badge.info { background: var(--blue-light); color: var(--blue); }
+    .badge.success { background: var(--green-light); color: var(--green); }
+    .badge.warn { background: var(--amber-light); color: var(--amber); }
+    .badge.danger { background: var(--red-light); color: var(--red); }
+
+    /* ── Company grid ── */
+    .company-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .company-tile {
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .company-tile:hover { border-color: var(--blue-mid); background: var(--blue-light); }
+
+    .company-tile.selected {
+      border-color: var(--blue);
+      background: var(--blue-light);
+      box-shadow: 0 0 0 2px rgba(24,95,165,0.15);
+    }
+
+    .company-tile .co-avatar {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: white;
+      margin-bottom: 10px;
+    }
+
+    .company-tile .co-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .company-tile .co-detail { font-size: 11px; color: var(--text-muted); }
+    .company-tile .check { position: absolute; top: 10px; right: 10px; display: none; }
+    .company-tile.selected .check { display: block; color: var(--blue); }
+
+    /* ── Table ── */
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      overflow-x: auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th {
+      background: var(--gray-50);
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--gray-50); }
+
+    /* ── Stats ── */
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .stat {
+      background: var(--gray-50);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+    }
+    .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-bottom: 6px; }
+    .stat-val { font-size: 26px; font-weight: 600; font-family: 'Sora', sans-serif; }
+
+    /* ── Progress ── */
+    .progress-track {
+      height: 5px;
+      background: var(--gray-100);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 10px;
+      display: none;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    /* ── Status alert ── */
+    .alert {
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+      line-height: 1.5;
+    }
+    .alert.success { background: var(--green-light); color: #27500A; display: block; }
+    .alert.error   { background: var(--red-light);   color: #791F1F; display: block; }
+    .alert.info    { background: var(--blue-light);  color: #0C447C; display: block; }
+    .alert.warn    { background: var(--amber-light); color: #633806; display: block; }
+
+    /* ── Placeholder chips ── */
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .chip {
+      background: var(--blue-light);
+      color: var(--blue);
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-family: monospace;
+      cursor: pointer;
+      border: 1px solid rgba(24,95,165,0.15);
+      transition: background 0.1s;
+    }
+    .chip:hover { background: #B5D4F4; }
+
+    /* ── Modal ── */
+    .modal-bg {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 440px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+    .modal h3 { font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+    /* ── Send log ── */
+    .send-log {
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 12px;
+      font-family: monospace;
+      background: var(--gray-50);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-top: 10px;
+      display: none;
+    }
+    .log-line { padding: 2px 0; }
+    .log-line.ok { color: var(--green); }
+    .log-line.err { color: var(--red); }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+    /* ── PDF preview ── */
+    #pdf-preview-iframe {
+      width: 100%;
+      height: 520px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .pdf-modal-bg {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 300;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 40px;
+      overflow-y: auto;
+    }
+    .pdf-modal-bg.open { display: flex; }
+    .pdf-modal {
+      background: white;
+      border-radius: var(--radius);
+      width: 600px;
+      padding: 20px;
+      border: 1px solid var(--border);
+    }
+    .pdf-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .pdf-modal-header h3 { font-size: 15px; font-weight: 600; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <h1>✉ MailBlast</h1>
+      <p>Bulk personalised mailer</p>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="showPage('send',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        Send Mails
+      </div>
+      <div class="nav-item" onclick="showPage('content',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Edit Content
+      </div>
+      <div class="nav-item" onclick="showPage('companies',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Companies
+      </div>
+      <div class="nav-item" onclick="showPage('settings',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        API Settings
+      </div>
+    </nav>
+    <div class="sidebar-footer">MailBlast v1.0</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- ── SEND PAGE ── -->
+    <div id="page-send" class="page active">
+      <div class="page-header">
+        <h2>Send personalised emails</h2>
+        <p>Select a company, paste your client list, and send branded PDF letters to everyone.</p>
+      </div>
+
+      <!-- Step 1: Company -->
+      <div class="card">
+        <div class="card-header">
+          <div class="step-badge">1</div>
+          Select company
+        </div>
+        <div class="company-grid" id="send-co-grid">
+          <p style="color:var(--text-muted); font-size:13px;">Loading companies…</p>
+        </div>
+      </div>
+
+      <!-- Step 2: Clients -->
+      <div class="card">
+        <div class="card-header">
+          <div class="step-badge">2</div>
+          Paste client list from Excel
+        </div>
+        <p class="hint" style="margin-bottom:10px;">Copy rows directly from Excel. First row must be headers. Required: <strong>Email</strong>. Also supports: Name, Phone, Address.</p>
+        <textarea id="client-paste" rows="7"
+          placeholder="Name&#9;Email&#9;Phone&#9;Address&#10;Rahul Shah&#9;rahul@example.com&#9;9876543210&#9;Surat, Gujarat&#10;Priya Patel&#9;priya@example.com&#9;9876500001&#9;Ahmedabad"></textarea>
+        <div style="display:flex; gap:8px; margin-top:10px; align-items:center; flex-wrap:wrap;">
+          <button class="btn primary sm" onclick="parseClients()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3zM3 9h18M9 21V9"/></svg>
+            Parse list
+          </button>
+          <button class="btn sm" onclick="clearClients()">Clear</button>
+          <span id="parse-badge"></span>
+        </div>
+        <div id="client-preview" style="margin-top:14px; display:none;"></div>
+      </div>
+
+      <!-- Step 3: Send -->
+      <div class="card">
+        <div class="card-header">
+          <div class="step-badge">3</div>
+          Preview & send
+        </div>
+
+        <div style="background:var(--gray-50); border-radius:var(--radius-sm); padding:12px 16px; font-size:13px; margin-bottom:16px; border:1px solid var(--border);">
+          <div style="margin-bottom:5px;"><span style="color:var(--text-muted); font-size:12px;">SUBJECT</span></div>
+          <div id="preview-subject" style="font-weight:500;">—</div>
+          <hr style="margin:10px 0;">
+          <div><span style="color:var(--text-muted); font-size:12px;">COMPANY &nbsp;</span><span id="preview-company">— none selected —</span></div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-label">Total recipients</div>
+            <div class="stat-val" id="stat-total">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Sent ✓</div>
+            <div class="stat-val" id="stat-sent" style="color:var(--green)">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Failed ✗</div>
+            <div class="stat-val" id="stat-failed" style="color:var(--red)">0</div>
+          </div>
+        </div>
+
+        <button class="btn primary" id="send-btn" onclick="sendMails()" style="width:100%; justify-content:center; padding:11px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          Send to all clients
+        </button>
+
+        <div class="progress-track" id="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+
+        <div class="send-log" id="send-log"></div>
+        <div class="alert" id="send-alert"></div>
+      </div>
+    </div>
+
+    <!-- ── CONTENT PAGE ── -->
+    <div id="page-content" class="page">
+      <div class="page-header">
+        <h2>Edit content</h2>
+        <p>Configure email subject, body, and the PDF letter. Use placeholders for personalisation.</p>
+      </div>
+
+      <!-- Email settings -->
+      <div class="card">
+        <div class="card-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Email settings (Content 2)
+        </div>
+
+        <label>Email subject / title</label>
+        <input type="text" id="email-subject" placeholder="e.g. Important update from {CompanyName}" />
+
+        <div class="row">
+          <div>
+            <label>Sender name</label>
+            <input type="text" id="sender-name" placeholder="Your Name or Company" />
+          </div>
+          <div>
+            <label>Reply-to email (optional)</label>
+            <input type="email" id="reply-to" placeholder="your@gmail.com" />
+          </div>
+        </div>
+
+        <label>Email body (shown above the PDF attachment)</label>
+        <textarea id="email-body" rows="5"></textarea>
+        <p class="hint">Click a placeholder to insert it at cursor:</p>
+        <div class="chips" id="email-chips"></div>
+
+        <hr>
+        <button class="btn primary" onclick="saveContent()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save email settings
+        </button>
+        <div class="alert" id="content-alert"></div>
+      </div>
+
+      <!-- PDF content -->
+      <div class="card">
+        <div class="card-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          PDF letter (Content 1)
+        </div>
+
+        <label>Letter heading / title</label>
+        <input type="text" id="pdf-title" placeholder="e.g. Account Update Notice" />
+
+        <label>Greeting line</label>
+        <input type="text" id="pdf-greeting" placeholder="Dear {Name}," />
+
+        <label>Letter body (main content — use placeholders for personalisation)</label>
+        <textarea id="pdf-body" rows="12"></textarea>
+        <p class="hint">Start a line with • or - for bullet points. Click to insert placeholders:</p>
+        <div class="chips" id="pdf-chips"></div>
+
+        <label>Closing line</label>
+        <input type="text" id="pdf-closing" placeholder="Warm regards," />
+
+        <hr>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn primary" onclick="savePDFContent()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save PDF content
+          </button>
+          <button class="btn" onclick="previewPDF()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Preview PDF (sample)
+          </button>
+        </div>
+        <div class="alert" id="pdf-alert"></div>
+      </div>
+    </div>
+
+    <!-- ── COMPANIES PAGE ── -->
+    <div id="page-companies" class="page">
+      <div class="page-header">
+        <h2>Manage companies</h2>
+        <p>Add, edit, or delete companies. Each company has its own branding used in the PDF.</p>
+      </div>
+      <div id="companies-list"></div>
+      <button class="btn primary" id="add-co-btn" onclick="openAddCompany()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add company
+      </button>
+    </div>
+
+    <!-- ── SETTINGS PAGE ── -->
+    <div id="page-settings" class="page">
+      <div class="page-header">
+        <h2>API settings</h2>
+        <p>Connect your Resend.com account to enable email sending.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Resend API key
+        </div>
+        <label>API key (from resend.com/api-keys)</label>
+        <input type="password" id="resend-key" placeholder="re_xxxxxxxxxxxxxxxxxx" />
+        <p class="hint">Your API key is saved on the server and never shown again once saved.</p>
+
+        <label>From email address (must be verified in Resend)</label>
+        <input type="email" id="from-email" placeholder="noreply@yourdomain.com" />
+
+        <hr>
+        <div style="display:flex; gap:8px;">
+          <button class="btn primary" onclick="saveSettings()">Save settings</button>
+          <button class="btn" onclick="testConnection()">Test connection</button>
+        </div>
+        <div class="alert" id="settings-alert"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          About Gmail
+        </div>
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.8;">
+          Gmail personal accounts cannot be used as the sending address directly. However you can set your Gmail as the <strong>Reply-to</strong> address above — clients will reply straight to your Gmail inbox.<br><br>
+          For sending, Resend requires a verified domain. If you own a domain, verify it on <a href="https://resend.com/domains" target="_blank" style="color:var(--blue);">resend.com/domains</a> and use that as your From address (e.g. <em>info@yourbusiness.com</em>).
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- Company modal -->
+<div class="modal-bg" id="co-modal">
+  <div class="modal">
+    <h3 id="co-modal-title">Add company</h3>
+    <label>Company name *</label>
+    <input type="text" id="co-name" placeholder="Acme Pvt. Ltd." />
+    <div class="row">
+      <div>
+        <label>Phone</label>
+        <input type="text" id="co-phone" placeholder="+91 98765 43210" />
+      </div>
+      <div>
+        <label>Logo initials (2–3 letters)</label>
+        <input type="text" id="co-initials" maxlength="3" placeholder="AC" />
+      </div>
+    </div>
+    <label>Address</label>
+    <textarea id="co-address" rows="2" placeholder="Ring Road, Surat, Gujarat 395001"></textarea>
+    <label>Brand colour (used in PDF header)</label>
+    <input type="color" id="co-color" value="#185FA5" style="width:56px; height:34px; padding:2px; cursor:pointer;" />
+    <div class="modal-footer">
+      <button class="btn" onclick="closeCoModal()">Cancel</button>
+      <button class="btn primary" onclick="saveCompany()">Save company</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF preview modal -->
+<div class="pdf-modal-bg" id="pdf-modal">
+  <div class="pdf-modal">
+    <div class="pdf-modal-header">
+      <h3>PDF preview (sample data)</h3>
+      <button class="btn sm" onclick="closePDFModal()">✕ Close</button>
+    </div>
+    <iframe id="pdf-preview-iframe" src=""></iframe>
+  </div>
+</div>
+
+<script>
+  const API = '';   // same origin — backend is on the same port
+  const PLACEHOLDERS = ['{Name}','{Email}','{Phone}','{Address}','{CompanyName}','{CompanyPhone}','{CompanyAddress}'];
+
+  let state = {
+    companies: [],
+    selectedCompany: null,
+    clients: [],
+    content: {},
+    editingCoId: null
+  };
+
+  // ── Init ────────────────────────────────────────────────────────────────────
+  async function init() {
+    try {
+      const res = await fetch(`${API}/api/config`);
+      const cfg = await res.json();
+      state.companies = cfg.companies || [];
+      state.content = cfg.content || {};
+      renderSendPage();
+      buildChips();
+    } catch(e) {
+      showAlert('send-alert','error','Cannot connect to backend. Make sure the server is running on http://localhost:3000');
+    }
+  }
+
+  // ── Navigation ──────────────────────────────────────────────────────────────
+  function showPage(id, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-'+id).classList.add('active');
+    el.classList.add('active');
+    if (id === 'send') renderSendPage();
+    if (id === 'content') loadContentFields();
+    if (id === 'companies') renderCompaniesList();
+    if (id === 'settings') loadSettings();
+  }
+
+  // ── Send page ────────────────────────────────────────────────────────────────
+  function renderSendPage() {
+    const grid = document.getElementById('send-co-grid');
+    if (!state.companies.length) {
+      grid.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">No companies yet. Add one in the Companies tab.</p>';
+      return;
+    }
+    grid.innerHTML = state.companies.map(c => `
+      <div class="company-tile ${state.selectedCompany === c.id ? 'selected' : ''}" onclick="selectCo(${c.id})">
+        <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;"><polyline points="20 6 9 17 4 12"/></svg>
+        <div class="co-avatar" style="background:${c.color};">${c.initials}</div>
+        <div class="co-name">${c.name}</div>
+        <div class="co-detail">${c.phone}</div>
+      </div>`).join('');
+    updatePreview();
+  }
+
+  function selectCo(id) {
+    state.selectedCompany = id;
+    renderSendPage();
+  }
+
+  function updatePreview() {
+    const co = state.companies.find(c => c.id === state.selectedCompany);
+    const subj = (state.content.subject || '').replace(/\{CompanyName\}/g, co ? co.name : '…');
+    document.getElementById('preview-subject').textContent = subj || '—';
+    document.getElementById('preview-company').textContent = co ? co.name : '— none selected —';
+    document.getElementById('stat-total').textContent = state.clients.length;
+  }
+
+  // ── Client parsing ───────────────────────────────────────────────────────────
+  function parseClients() {
+    const raw = document.getElementById('client-paste').value.trim();
+    if (!raw) return;
+    const lines = raw.split('\n').map(l => l.split('\t').map(c => c.trim()));
+    const headers = lines[0].map(h => h.toLowerCase());
+    const idx = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k)));
+    const nameI  = idx(['name']);
+    const emailI = idx(['email','mail']);
+    const phoneI = idx(['phone','mobile','number','contact']);
+    const addrI  = idx(['address','addr','city']);
+
+    if (emailI === -1) {
+      showAlert('send-alert','error','Could not find an Email column. Make sure your header row has "Email".');
+      return;
+    }
+
+    state.clients = lines.slice(1)
+      .filter(r => r.length > 1 && r[emailI] && r[emailI].includes('@'))
+      .map(r => ({
+        name:    nameI  >= 0 ? r[nameI]  || '' : '',
+        email:   r[emailI] || '',
+        phone:   phoneI >= 0 ? r[phoneI] || '' : '',
+        address: addrI  >= 0 ? r[addrI]  || '' : ''
+      }));
+
+    document.getElementById('parse-badge').innerHTML =
+      `<span class="badge success">✓ ${state.clients.length} clients parsed</span>`;
+
+    const preview = document.getElementById('client-preview');
+    const show = state.clients.slice(0, 6);
+    preview.style.display = 'block';
+    preview.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Address</th></tr></thead>
+      <tbody>
+        ${show.map((c,i) => `<tr><td>${i+1}</td><td>${c.name||'—'}</td><td>${c.email}</td><td>${c.phone||'—'}</td><td>${c.address||'—'}</td></tr>`).join('')}
+        ${state.clients.length > 6 ? `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">…and ${state.clients.length-6} more clients</td></tr>` : ''}
+      </tbody></table></div>`;
+    updatePreview();
+  }
+
+  function clearClients() {
+    state.clients = [];
+    document.getElementById('client-paste').value = '';
+    document.getElementById('parse-badge').innerHTML = '';
+    document.getElementById('client-preview').style.display = 'none';
+    document.getElementById('stat-total').textContent = '0';
+  }
+
+  // ── Sending ──────────────────────────────────────────────────────────────────
+  async function sendMails() {
+    if (!state.selectedCompany) { showAlert('send-alert','error','Please select a company first.'); return; }
+    if (!state.clients.length)  { showAlert('send-alert','error','Please paste and parse a client list first.'); return; }
+
+    const btn = document.getElementById('send-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    const track = document.getElementById('progress-track');
+    const fill  = document.getElementById('progress-fill');
+    const log   = document.getElementById('send-log');
+    track.style.display = 'block';
+    log.style.display = 'block';
+    log.innerHTML = '';
+
+    document.getElementById('stat-sent').textContent = '0';
+    document.getElementById('stat-failed').textContent = '0';
+    showAlert('send-alert','info',`Generating PDFs and sending to ${state.clients.length} clients…`);
+
+    try {
+      const res = await fetch(`${API}/api/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId: state.selectedCompany, clients: state.clients })
+      });
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop();
+        for (const part of parts) {
+          if (!part.startsWith('data: ')) continue;
+          const data = JSON.parse(part.slice(6));
+          if (data.type === 'progress') {
+            fill.style.width = Math.round(data.index / data.total * 100) + '%';
+            document.getElementById('stat-sent').textContent = data.sent;
+            document.getElementById('stat-failed').textContent = data.failed;
+            const line = document.createElement('div');
+            line.className = 'log-line ' + (data.status === 'ok' ? 'ok' : 'err');
+            line.textContent = data.status === 'ok'
+              ? `[${data.index}/${data.total}] ✓ ${data.email}`
+              : `[${data.index}/${data.total}] ✗ ${data.email} — ${data.error}`;
+            log.appendChild(line);
+            log.scrollTop = log.scrollHeight;
+          }
+          if (data.type === 'done') {
+            const type = data.failed === 0 ? 'success' : data.sent === 0 ? 'error' : 'warn';
+            showAlert('send-alert', type, `Done! ${data.sent} sent, ${data.failed} failed.`);
+          }
+        }
+      }
+    } catch(e) {
+      showAlert('send-alert','error','Send failed: ' + e.message);
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Send to all clients';
+  }
+
+  // ── Content page ─────────────────────────────────────────────────────────────
+  function loadContentFields() {
+    const c = state.content;
+    document.getElementById('email-subject').value = c.subject || '';
+    document.getElementById('sender-name').value = c.senderName || '';
+    document.getElementById('reply-to').value = c.replyTo || '';
+    document.getElementById('email-body').value = c.emailBody || '';
+    document.getElementById('pdf-title').value = c.pdfTitle || '';
+    document.getElementById('pdf-greeting').value = c.pdfGreeting || '';
+    document.getElementById('pdf-body').value = c.pdfBody || '';
+    document.getElementById('pdf-closing').value = c.pdfClosing || '';
+  }
+
+  function buildChips() {
+    ['email-chips','pdf-chips'].forEach((id, i) => {
+      const fieldId = i === 0 ? 'email-body' : 'pdf-body';
+      document.getElementById(id).innerHTML = PLACEHOLDERS.map(p =>
+        `<span class="chip" onclick="insertAt('${fieldId}','${p}')">${p}</span>`).join('');
+    });
+  }
+
+  function insertAt(fieldId, text) {
+    const el = document.getElementById(fieldId);
+    const s = el.selectionStart, e = el.selectionEnd;
+    el.value = el.value.slice(0,s) + text + el.value.slice(e);
+    el.focus();
+    el.setSelectionRange(s+text.length, s+text.length);
+  }
+
+  async function saveContent() {
+    state.content = {
+      ...state.content,
+      subject:    document.getElementById('email-subject').value,
+      senderName: document.getElementById('sender-name').value,
+      replyTo:    document.getElementById('reply-to').value,
+      emailBody:  document.getElementById('email-body').value
+    };
+    await fetch(`${API}/api/config`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ content: state.content }) });
+    showAlert('content-alert','success','Email settings saved!');
+  }
+
+  async function savePDFContent() {
+    state.content = {
+      ...state.content,
+      pdfTitle:    document.getElementById('pdf-title').value,
+      pdfGreeting: document.getElementById('pdf-greeting').value,
+      pdfBody:     document.getElementById('pdf-body').value,
+      pdfClosing:  document.getElementById('pdf-closing').value
+    };
+    await fetch(`${API}/api/config`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ content: state.content }) });
+    showAlert('pdf-alert','success','PDF content saved!');
+  }
+
+  async function previewPDF() {
+    const coId = state.selectedCompany || (state.companies[0] && state.companies[0].id);
+    if (!coId) { alert('Please select or add a company first.'); return; }
+    const iframe = document.getElementById('pdf-preview-iframe');
+    iframe.src = `${API}/api/preview-pdf-view?companyId=${coId}`;
+    document.getElementById('pdf-modal').classList.add('open');
+  }
+
+  function closePDFModal() { document.getElementById('pdf-modal').classList.remove('open'); }
+
+  // ── Companies ────────────────────────────────────────────────────────────────
+  function renderCompaniesList() {
+    const list = document.getElementById('companies-list');
+    if (!state.companies.length) {
+      list.innerHTML = '<p style="color:var(--text-muted);margin-bottom:16px;">No companies yet.</p>';
+      document.getElementById('add-co-btn').style.display = 'inline-flex';
+      return;
+    }
+    list.innerHTML = state.companies.map(c => `
+      <div class="card" style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+        <div style="width:46px;height:46px;border-radius:10px;background:${c.color};display:flex;align-items:center;justify-content:center;color:white;font-size:15px;font-weight:700;flex-shrink:0;">${c.initials}</div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:14px;">${c.name}</div>
+          <div style="font-size:12px;color:var(--text-muted);">${c.phone} · ${c.address}</div>
+        </div>
+        <button class="btn sm" onclick="openEditCo(${c.id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+        <button class="btn sm danger" onclick="deleteCo(${c.id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>`).join('');
+    document.getElementById('add-co-btn').style.display = state.companies.length >= 3 ? 'none' : 'inline-flex';
+  }
+
+  function openAddCompany() {
+    state.editingCoId = null;
+    document.getElementById('co-modal-title').textContent = 'Add company';
+    ['co-name','co-phone','co-initials','co-address'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('co-color').value = '#185FA5';
+    document.getElementById('co-modal').classList.add('open');
+  }
+
+  function openEditCo(id) {
+    const c = state.companies.find(c => c.id === id);
+    state.editingCoId = id;
+    document.getElementById('co-modal-title').textContent = 'Edit company';
+    document.getElementById('co-name').value = c.name;
+    document.getElementById('co-phone').value = c.phone;
+    document.getElementById('co-initials').value = c.initials;
+    document.getElementById('co-address').value = c.address;
+    document.getElementById('co-color').value = c.color;
+    document.getElementById('co-modal').classList.add('open');
+  }
+
+  async function saveCompany() {
+    const name = document.getElementById('co-name').value.trim();
+    if (!name) { alert('Company name is required.'); return; }
+    const data = {
+      name,
+      phone:    document.getElementById('co-phone').value.trim(),
+      initials: document.getElementById('co-initials').value.trim() || name.slice(0,2).toUpperCase(),
+      address:  document.getElementById('co-address').value.trim(),
+      color:    document.getElementById('co-color').value
+    };
+    if (state.editingCoId) {
+      const idx = state.companies.findIndex(c => c.id === state.editingCoId);
+      state.companies[idx] = { ...state.companies[idx], ...data };
+    } else {
+      state.companies.push({ id: Date.now(), ...data });
+    }
+    await fetch(`${API}/api/config`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ companies: state.companies }) });
+    closeCoModal();
+    renderCompaniesList();
+    renderSendPage();
+  }
+
+  async function deleteCo(id) {
+    if (!confirm('Delete this company? This cannot be undone.')) return;
+    state.companies = state.companies.filter(c => c.id !== id);
+    if (state.selectedCompany === id) state.selectedCompany = null;
+    await fetch(`${API}/api/config`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ companies: state.companies }) });
+    renderCompaniesList();
+    renderSendPage();
+  }
+
+  function closeCoModal() { document.getElementById('co-modal').classList.remove('open'); }
+
+  // ── Settings ─────────────────────────────────────────────────────────────────
+  async function loadSettings() {
+    const res = await fetch(`${API}/api/config`);
+    const cfg = await res.json();
+    document.getElementById('from-email').value = cfg.fromEmail || '';
+    document.getElementById('resend-key').value = cfg.apiKey || '';
+  }
+
+  async function saveSettings() {
+    const apiKey = document.getElementById('resend-key').value.trim();
+    const fromEmail = document.getElementById('from-email').value.trim();
+    await fetch(`${API}/api/settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey, fromEmail })
+    });
+    showAlert('settings-alert','success','Settings saved!');
+  }
+
+  async function testConnection() {
+    showAlert('settings-alert','info','Testing…');
+    const res = await fetch(`${API}/api/test-connection`);
+    const data = await res.json();
+    showAlert('settings-alert', data.ok ? 'success' : 'error', data.message);
+  }
+
+  // ── Utils ─────────────────────────────────────────────────────────────────────
+  function showAlert(id, type, msg) {
+    const el = document.getElementById(id);
+    el.className = 'alert ' + type;
+    el.textContent = msg;
+  }
+
+  init();
+</script>
+</body>
+</html>

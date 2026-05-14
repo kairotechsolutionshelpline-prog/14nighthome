@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  createdAt      DateTime  @default(now())
+}
+
+model Company {
+  id          String    @id @default(cuid())
+  name        String
+  phone       String?
+  address     String?
+  brandColor  String?
+  initials    String?
+  senderEmail String
+  senderName  String
+  logo        String?
+  createdAt   DateTime  @default(now())
+  logs        MailLog[]
+}
+
+model Template {
+  id        String   @id @default(cuid())
+  name      String
+  subject   String
+  emailBody String
+  pdfTitle  String
+  pdfBody   String
+  createdAt DateTime @default(now())
+}
+
+model MailLog {
+  id             String   @id @default(cuid())
+  recipientName  String
+  recipientEmail String
+  companyName    String
+  senderName     String
+  status         String   @default("sent")
+  queueStatus    String?
+  failureReason  String?
+  companyId      String?
+  company        Company? @relation(fields: [companyId], references: [id])
+  createdAt      DateTime @default(now())
+}

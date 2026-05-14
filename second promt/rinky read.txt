@@ -1,0 +1,506 @@
+# PROJECT OVERVIEW
+
+Build a secure production-grade “Intimation” bulk mail system integrated inside my existing Next.js website hosted on Railway.
+
+Main domain:
+https://redalertsol.com
+
+This is NOT a public feature.
+
+This is a hidden admin-only internal communication system for sending personalized PDF emails to clients.
+
+Expected volume:
+- less than 50 emails/day
+
+Main goals:
+- personalized PDF attachments
+- editable templates
+- multiple company profiles
+- delivery tracking
+- strong authentication/security
+- Railway-compatible deployment
+- Resend email provider
+- future Gmail provider switching support
+
+--------------------------------------------------
+
+# EXISTING WEBSITE
+
+Current stack:
+- Next.js
+- Railway hosting
+- existing /pages, /api, /public, /styles
+
+IMPORTANT:
+Current frontend-only auth using:
+sessionStorage.getItem('kt_auth')
+
+MUST be removed completely because it is insecure.
+
+Replace with proper backend authentication.
+
+--------------------------------------------------
+
+# FINAL ADMIN FLOW
+
+redalertsol.com/admin
+↓
+secure login page
+↓
+dashboard
+↓
+Intimation
+↓
+Choose company
+↓
+Edit template
+↓
+Paste/import client list
+↓
+Preview PDF
+↓
+Send mails
+↓
+Track statuses/history
+
+--------------------------------------------------
+
+# ADMIN ACCESS
+
+Use:
+- hidden route only
+
+NO public admin button.
+
+Admin route:
+/admin
+
+Must not be visible publicly.
+
+--------------------------------------------------
+
+# AUTHENTICATION REQUIREMENTS
+
+Single admin account only.
+
+Must implement:
+
+- secure backend authentication
+- bcrypt password hashing
+- secure sessions
+- httpOnly cookies
+- CSRF protection
+- session expiration
+- invalidate previous session on new login
+- login lockout after failed attempts
+- Cloudflare Turnstile CAPTCHA
+- logout system
+- protected admin middleware
+
+Recommended:
+- NextAuth/Auth.js OR secure custom auth
+- bcryptjs
+- iron-session
+
+DO NOT use frontend-only auth.
+
+--------------------------------------------------
+
+# ENVIRONMENT VARIABLES
+
+Store ONLY in Railway Variables / .env
+
+NEVER store secrets in JSON/config files.
+
+Required variables:
+
+RESEND_API_KEY=
+SESSION_SECRET=
+ADMIN_EMAIL=
+ADMIN_PASSWORD_HASH=
+DATABASE_URL=
+TURNSTILE_SECRET_KEY=
+TURNSTILE_SITE_KEY=
+
+--------------------------------------------------
+
+# DATABASE
+
+Use:
+- Railway PostgreSQL
+
+DO NOT use JSON files for production storage.
+
+Database should store:
+
+- admin user
+- companies
+- templates
+- mail history
+- delivery statuses
+- send logs
+- queue statuses
+- settings
+
+--------------------------------------------------
+
+# COMPANIES SYSTEM
+
+Maximum companies:
+- 3 companies only
+
+Each company should store:
+- company name
+- phone
+- address
+- brand color
+- initials
+- sender email
+- default sender name
+- logo (optional)
+
+Admin must be able to:
+- add company
+- edit company
+- delete company
+
+--------------------------------------------------
+
+# TEMPLATE EDITOR
+
+Need a rich text editor similar to MS Word.
+
+Recommended:
+- TipTap
+OR
+- TinyMCE
+
+Must support:
+- bold
+- italic
+- underline
+- colors
+- alignment
+- headings
+- lists
+- tables
+- placeholders
+- image/logo insertion
+- preview mode
+
+Editable sections:
+- email subject
+- email body
+- PDF title
+- PDF greeting
+- PDF body
+- PDF closing
+
+Required placeholders:
+
+{Name}
+{Email}
+{Phone}
+{Address}
+{CompanyName}
+{CompanyPhone}
+{CompanyAddress}
+
+--------------------------------------------------
+
+# PDF REQUIREMENTS
+
+Generate REAL PDF attachments using Puppeteer.
+
+Requirements:
+- professional design
+- company branding/colors
+- logo support
+- placeholders
+- A4 format
+- preview before sending
+- attached directly to email
+
+DO NOT save generated PDFs permanently.
+
+Only logs should be stored.
+
+--------------------------------------------------
+
+# IMPORTANT PUPPETEER OPTIMIZATION
+
+DO NOT launch Chromium for every email.
+
+BAD:
+puppeteer.launch()
+inside every send loop.
+
+Required:
+- singleton/reusable browser instance
+- optimized Railway memory usage
+
+Railway-compatible flags:
+
+args: [
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-gpu'
+]
+
+--------------------------------------------------
+
+# HINDI + ENGLISH PDF SUPPORT
+
+Hindi support is VERY IMPORTANT.
+
+Use proper Unicode fonts.
+
+Recommended fonts:
+- Noto Sans
+- Noto Serif Devanagari
+
+PDF rendering must correctly support:
+- English
+- Hindi
+
+--------------------------------------------------
+
+# EMAIL PROVIDER
+
+Primary provider:
+- Resend
+
+Architecture should support future provider switching:
+- Gmail SMTP later
+- abstraction layer for providers
+
+DO NOT tightly couple sending logic to Resend only.
+
+--------------------------------------------------
+
+# SENDER NAME REQUIREMENT
+
+Before each bulk send,
+admin must be able to manually edit/change sender display name.
+
+Example:
+
+"Legal Team" <hello@redalertsol.com>
+
+or
+
+"Accounts Department" <hello@redalertsol.com>
+
+Email/domain stays same,
+display name changes.
+
+--------------------------------------------------
+
+# CLIENT IMPORT SYSTEM
+
+Support:
+- Excel paste
+- CSV upload
+- manual input
+
+Required fields:
+
+Name
+Email
+Phone
+Address
+
+Validation required:
+- invalid emails
+- malformed rows
+- missing required fields
+- duplicate emails
+
+Duplicate handling:
+- show “Duplicate skipped”
+
+--------------------------------------------------
+
+# BULK SENDING LOGIC
+
+Requirements:
+- sequential queue
+- continue remaining sends if one fails
+- retry temporary failures
+- controlled sending intervals
+
+Allowed:
+- responsible throttling
+- queue smoothing
+
+Recommended randomized interval:
+- 8–20 seconds
+
+Use for stability/rate control only.
+
+--------------------------------------------------
+
+# DELIVERY TRACKING
+
+Need BOTH:
+1. provider delivery status
+2. internal processing status
+
+Provider statuses:
+- queued
+- sent
+- delivered
+- bounced
+- failed
+
+Internal statuses:
+- generating PDF
+- waiting
+- retrying
+- throttled
+
+Use:
+- Resend webhooks
+
+--------------------------------------------------
+
+# HISTORY PANEL
+
+Need history page showing:
+- recipient email
+- recipient name
+- company used
+- send time
+- sender name used
+- delivery status
+- failure reason
+- queue status
+
+Filters:
+- delivered
+- failed
+- pending
+- date range
+
+Retention:
+- manual deletion by date range
+
+No export system needed.
+
+No permanent PDF storage needed.
+
+--------------------------------------------------
+
+# SECURITY REQUIREMENTS
+
+MUST implement:
+
+## Authentication Security
+- bcrypt hashing
+- secure cookies
+- session expiration
+- login lockout
+- failed login tracking
+
+## API Security
+- CSRF protection
+- rate limiting
+- input validation
+- sanitization
+
+## Frontend Security
+- XSS prevention
+- HTML escaping
+
+## Backend Security
+- protected admin routes
+- authorization middleware
+- secure headers
+
+Recommended packages:
+
+helmet
+express-rate-limit
+bcryptjs
+csurf
+validator
+DOMPurify
+
+--------------------------------------------------
+
+# CURRENT SECURITY PROBLEMS TO FIX
+
+The previous prototype had these problems:
+
+- frontend-only auth
+- API key stored in config file
+- no CSRF protection
+- no rate limiting
+- no database
+- no delivery history
+- no sanitization
+- no login lockout
+- no email validation
+- no admin authorization middleware
+- Puppeteer launched per email
+
+These MUST be fixed.
+
+--------------------------------------------------
+
+# REQUIRED ROUTES
+
+/admin
+/admin/dashboard
+/admin/intimation
+/admin/companies
+/admin/templates
+/admin/history
+
+/api/login
+/api/logout
+/api/send
+/api/webhooks/resend
+
+--------------------------------------------------
+
+# UI REQUIREMENTS
+
+Need:
+- modern admin dashboard
+- desktop-focused UI
+- responsive enough for browser desktop mode
+- professional clean design
+
+No need for public visibility.
+
+--------------------------------------------------
+
+# DEPLOYMENT REQUIREMENTS
+
+Hosting:
+- Railway
+
+Must be production-ready for Railway deployment.
+
+Need:
+- Railway-compatible Puppeteer setup
+- PostgreSQL integration
+- environment variable support
+
+--------------------------------------------------
+
+# FINAL GOAL
+
+Build a secure hidden admin-only “Intimation” module integrated into my existing Next.js Railway website that can:
+
+- send personalized PDF emails
+- support 3 companies
+- use editable templates
+- support Hindi and English PDFs
+- track mail statuses
+- securely authenticate admin
+- scale safely for low-volume business communication
+- support future provider switching
+- remain secure for public internet deployment
