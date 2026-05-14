@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     }
 
     const session = await getIronSession(req, res, sessionOptions)
-    session.admin = { id: admin.id, email: admin.email, loggedIn: true }
+    session.admin = { id: admin.id, email: admin.email, loggedIn: true, isIntimation: true, loginTime: Date.now() }
     await session.save()
 
     return res.status(200).json({ success: true })
