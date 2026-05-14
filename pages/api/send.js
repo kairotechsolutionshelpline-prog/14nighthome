@@ -43,12 +43,12 @@ const countdownBlock = deadline ? `
   <p style="font-size:14px;color:#444;margin-bottom:20px;">You have been registered successfully with Kairotech Solutions.<br>Thank you for working with us!</p>
   <div style="background:#f5f5f5;border-radius:8px;padding:14px 16px;margin-bottom:16px;">
     <p style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Your login credentials</p>
-    <p style="font-size:13px;margin:6px 0;">🔗 <strong>Login:</strong> <a href="https://kairotechsolutions-production.up.railway.app/" style="color:#185FA5;">Click here to login</a></p>
+    <p style="font-size:13px;margin:6px 0;">🔗 <strong>Login:</strong> <a href="https://redalertsol.com/" style="color:#185FA5;">Click here to login</a></p>
     <p style="font-size:13px;margin:6px 0;">👤 <strong>Username:</strong> ${email}</p>
     <p style="font-size:13px;margin:6px 0;">🔑 <strong>Password:</strong> Your Phone Number</p>
   </div>
   ${countdownBlock}
-  <a href="https://kairotechsolutions-production.up.railway.app/" style="display:block;text-align:center;background:#185FA5;color:#ffffff;border-radius:8px;padding:11px;font-size:14px;font-weight:600;text-decoration:none;margin-bottom:20px;">🔗 Go to Login Page</a>
+  <a href="https://redalertsol.com/" style="display:block;text-align:center;background:#185FA5;color:#ffffff;border-radius:8px;padding:11px;font-size:14px;font-weight:600;text-decoration:none;margin-bottom:20px;">🔗 Go to Login Page</a>
   <div style="background:#E6F1FB;border-radius:8px;padding:16px;margin-bottom:16px;">
     <p style="font-size:14px;font-weight:600;color:#0C447C;margin-bottom:8px;">🌟 Need Help? We're Here for You!</p>
     <p style="font-size:13px;color:#185FA5;margin-bottom:10px;">If you have any questions or need assistance, feel free to contact our Helpline Team. We'll be happy to help! 😊</p>
