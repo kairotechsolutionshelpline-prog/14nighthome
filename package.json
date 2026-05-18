@@ -28,7 +28,6 @@
     "dotenv": "^17.4.2",
     "iron-session": "^8.0.4",
     "next": "14.2.35",
-    "nodemailer": "^6.9.7",
     "papaparse": "^5.4.1",
     "pg": "^8.11.3",
     "prisma": "^5.22.0",
