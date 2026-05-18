@@ -3,7 +3,13 @@ import nodemailer from 'nodemailer'
 import { requireAdmin } from '../../middleware/admin'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-
+const gmailTransport = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+})
 function getCountdownText(deadlineDate) {
   const now = new Date()
   const deadline = new Date(deadlineDate)
