@@ -93,7 +93,7 @@ export default function Home() {
   async function sendAll() {
     if (!members.length) return
     if (!senderName.trim()) { alert('Please enter a Sender Name before sending.'); return }
-    if (!senderPrefix.trim()) { alert('Please enter a Sender Email prefix before sending.'); return }
+    if (mailProvider !== 'gmail' && !senderPrefix.trim()) { alert('Please enter a Sender Email prefix before sending.'); return }
     setSending(true)
     const pendingMembers = members.filter(m => m.status !== 'sent')
     setMembers(prev => prev.map(m => m.status !== 'sent' ? { ...m, status: 'sending' } : m))
