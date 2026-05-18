@@ -12,12 +12,12 @@ export default function Home() {
   const [history, setHistory] = useState([])
   const [submissionDate, setSubmissionDate] = useState('')
   const [liveCountdown, setLiveCountdown] = useState(null)
+  const [senderName, setSenderName] = useState('')
+  const [senderPrefix, setSenderPrefix] = useState('')
 
-  // Bug #13 fix: verify session server-side on mount instead of trusting sessionStorage alone
   useEffect(() => {
-    fetch('/api/auth/verify', { credentials: 'include' })
-      .then(res => { if (res.ok) setAuthed(true) })
-      .catch(() => {})
+    const a = sessionStorage.getItem('kt_auth')
+    if (a === 'true') setAuthed(true)
     const h = localStorage.getItem('kt_history')
     if (h) setHistory(JSON.parse(h))
   }, [])
@@ -59,11 +59,10 @@ export default function Home() {
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // Bug #13 fix: include credentials so the server can set an httpOnly session cookie
-      credentials: 'include',
       body: JSON.stringify({ email, password })
     })
     if (res.ok) {
+      sessionStorage.setItem('kt_auth', 'true')
       setAuthed(true)
     } else {
       setLoginError('Incorrect password. Try again.')
@@ -92,17 +91,16 @@ export default function Home() {
 
   async function sendAll() {
     if (!members.length) return
+    if (!senderName.trim()) { alert('Please enter a Sender Name before sending.'); return }
+    if (!senderPrefix.trim()) { alert('Please enter a Sender Email prefix before sending.'); return }
     setSending(true)
     const pendingMembers = members.filter(m => m.status !== 'sent')
     setMembers(prev => prev.map(m => m.status !== 'sent' ? { ...m, status: 'sending' } : m))
 
-    // Bug #13 fix: include credentials so the session cookie is sent and the
-    // server-side guard on /api/send can actually verify the caller is authenticated
     const res = await fetch('/api/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ members: pendingMembers, submissionDate })
+      body: JSON.stringify({ members: pendingMembers, submissionDate, senderName: senderName.trim(), senderPrefix: senderPrefix.trim() })
     })
     const data = await res.json()
 
@@ -127,9 +125,8 @@ export default function Home() {
     setSending(false)
   }
 
-  async function logout() {
-    // Bug #13 fix: hit a server-side logout endpoint to clear the httpOnly cookie
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+  function logout() {
+    sessionStorage.removeItem('kt_auth')
     setAuthed(false)
   }
 
@@ -214,6 +211,7 @@ export default function Home() {
                 <div style={{ ...styles.statPill, background: failedCount > 0 ? '#FCEBEB' : '#f5f5f5', color: failedCount > 0 ? '#791F1F' : '#888' }}>{failedCount} failed</div>
               </div>
             </div>
+
             <div style={styles.membersList}>
               {members.map((m, i) => (
                 <div key={i} style={styles.memberRow}>
@@ -237,7 +235,32 @@ export default function Home() {
               ))}
             </div>
 
-            <div style={{ marginTop: '16px', marginBottom: '12px' }}>
+            {/* Sender Details */}
+            <div style={{ marginTop: '16px', marginBottom: '4px' }}>
+              <label style={styles.label}>✉️ Sender Name <span style={{ color: '#A32D2D' }}>*</span></label>
+              <input
+                type="text"
+                value={senderName}
+                onChange={e => setSenderName(e.target.value)}
+                placeholder="e.g. Kairotech Solutions"
+                style={{ ...styles.input, marginBottom: '12px' }}
+              />
+
+              <label style={styles.label}>📧 Sender Email Prefix <span style={{ color: '#A32D2D' }}>*</span></label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <input
+                  type="text"
+                  value={senderPrefix}
+                  onChange={e => setSenderPrefix(e.target.value.replace(/\s/g, '').toLowerCase())}
+                  placeholder="e.g. updates"
+                  style={{ ...styles.input, marginBottom: 0, maxWidth: '160px' }}
+                />
+                <span style={{ fontSize: '14px', color: '#555', whiteSpace: 'nowrap' }}>@trulogictech.com</span>
+              </div>
+            </div>
+
+            {/* Submission Deadline */}
+            <div style={{ marginBottom: '12px' }}>
               <label style={styles.label}>📅 Submission Deadline (optional)</label>
               <select
                 value={submissionDate}
