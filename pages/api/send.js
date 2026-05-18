@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 import { requireAdmin } from '../../middleware/admin'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
