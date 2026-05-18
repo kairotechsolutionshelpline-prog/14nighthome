@@ -73,7 +73,7 @@ const countdownBlock = deadline ? `
 
 async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
-  const { members, submissionDate, senderName, senderPrefix } = req.body
+  const { members, submissionDate, senderName, senderPrefix, provider } = req.body
   if (!members || !Array.isArray(members)) return res.status(400).json({ error: 'Invalid members list' })
 
   const fromName = senderName || process.env.SENDER_NAME
@@ -82,6 +82,14 @@ async function handler(req, res) {
   const results = []
   for (const member of members) {
     try {
+      if (provider === 'gmail') {
+        await gmailTransport.sendMail({
+          from: `${fromName} <${process.env.GMAIL_USER}>`,
+          to: member.email,
+          subject: 'You have been registered successfully with Kairotech Solutions',
+          html: buildHTML(member.name, member.email, submissionDate),
+        })
+      } else {
       await resend.emails.send({
         from: `${fromName} <${fromEmail}>`,
         to: [member.email],
