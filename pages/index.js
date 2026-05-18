@@ -14,6 +14,7 @@ export default function Home() {
   const [liveCountdown, setLiveCountdown] = useState(null)
   const [senderName, setSenderName] = useState('')
   const [senderPrefix, setSenderPrefix] = useState('')
+  const [mailProvider, setMailProvider] = useState('resend')
 
   useEffect(() => {
     const a = sessionStorage.getItem('kt_auth')
@@ -100,7 +101,7 @@ export default function Home() {
     const res = await fetch('/api/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ members: pendingMembers, submissionDate, senderName: senderName.trim(), senderPrefix: senderPrefix.trim() })
+     body: JSON.stringify({ members: pendingMembers, submissionDate, senderName: senderName.trim(), senderPrefix: senderPrefix.trim(), provider: mailProvider })
     })
     const data = await res.json()
 
@@ -235,8 +236,27 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Sender Details */}
+{/* Sender Details */}
             <div style={{ marginTop: '16px', marginBottom: '4px' }}>
+
+              <label style={styles.label}>📮 Mail Server</label>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setMailProvider('resend')}
+                  style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1.5px solid', borderColor: mailProvider === 'resend' ? '#185FA5' : '#ddd', background: mailProvider === 'resend' ? '#E6F1FB' : '#fff', color: mailProvider === 'resend' ? '#185FA5' : '#555', fontWeight: mailProvider === 'resend' ? '600' : '400', cursor: 'pointer', fontSize: '13px' }}
+                >
+                  🖥️ Server Mail
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMailProvider('gmail')}
+                  style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1.5px solid', borderColor: mailProvider === 'gmail' ? '#EA4335' : '#ddd', background: mailProvider === 'gmail' ? '#FDE8E6' : '#fff', color: mailProvider === 'gmail' ? '#EA4335' : '#555', fontWeight: mailProvider === 'gmail' ? '600' : '400', cursor: 'pointer', fontSize: '13px' }}
+                >
+                  📧 Google Mail
+                </button>
+              </div>
+
               <label style={styles.label}>✉️ Sender Name <span style={{ color: '#A32D2D' }}>*</span></label>
               <input
                 type="text"
