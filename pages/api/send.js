@@ -96,7 +96,8 @@ async function handler(req, res) {
         subject: 'You have been registered successfully with Kairotech Solutions',
         html: buildHTML(member.name, member.email, submissionDate),
         tags: [{ name: 'member', value: member.email.replace('@','_').replace(/\./g,'_') }]
-      })
+      })  
+        }
       results.push({ email: member.email, status: 'sent' })
     } catch (e) {
       results.push({ email: member.email, status: 'failed', error: e.message })
