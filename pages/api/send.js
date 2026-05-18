@@ -66,14 +66,17 @@ const countdownBlock = deadline ? `
 
 async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
-  const { members, submissionDate } = req.body
+  const { members, submissionDate, senderName, senderPrefix } = req.body
   if (!members || !Array.isArray(members)) return res.status(400).json({ error: 'Invalid members list' })
+
+  const fromName = senderName || process.env.SENDER_NAME
+  const fromEmail = senderPrefix ? `${senderPrefix}@trulogictech.com` : process.env.SENDER_EMAIL
 
   const results = []
   for (const member of members) {
     try {
       await resend.emails.send({
-        from: `${process.env.SENDER_NAME} <${process.env.SENDER_EMAIL}>`,
+        from: `${fromName} <${fromEmail}>`,
         to: [member.email],
         subject: 'You have been registered successfully with Kairotech Solutions',
         html: buildHTML(member.name, member.email, submissionDate),
